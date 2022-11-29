@@ -9,7 +9,7 @@ This document describes how to build and run IPDK networking recipe on DPDK targ
 ### Build P4 SDE for DPDK
 
 ```bash
-git clone --recursive git@github.com:p4lang/p4-dpdk-target.git p4sde
+   git clone --recursive git@github.com:p4lang/p4-dpdk-target.git p4sde
 ```
 
 For build instructions, refer [P4 SDE Readme](https://github.com/p4lang/p4-dpdk-target/blob/main/README.md#building-and-installing)
@@ -17,12 +17,12 @@ For build instructions, refer [P4 SDE Readme](https://github.com/p4lang/p4-dpdk-
 ### Build and install infrap4d dependencies
 
 ```bash
-git clone --recursive git@github.com:ipdk-io/networking-recipe.git ipdk.recipe
-cd ipdk.recipe
-export IPDK_RECIPE=`pwd`
-cd $IPDK_RECIPE/setup
-cmake -B build -DCMAKE_INSTALL_PREFIX=<dependency install path> [-DUSE_SUDO=ON]
-cmake --build build [-j<njobs>]
+   git clone --recursive git@github.com:ipdk-io/networking-recipe.git ipdk.recipe
+   cd ipdk.recipe
+   export IPDK_RECIPE=`pwd`
+   cd $IPDK_RECIPE/setup
+   cmake -B build -DCMAKE_INSTALL_PREFIX=<dependency install path> [-DUSE_SUDO=ON]
+   cmake --build build [-j<njobs>]
 ```
 
 *Note*: If running as non-root user, provide `-DUSE_SUDO=ON` option to cmake config and also use `sudo` for ldconfig
@@ -32,49 +32,48 @@ cmake --build build [-j<njobs>]
 #### Set environment variables
  - export DEPEND_INSTALL=`absolute path for installing dependencies`
  - export SDE_INSTALL=`absolute path for p4 sde install built in previous step`
- - export LD_LIBRARY_PATH=$IPDK_RECIPE/install/lib/:$SDE_INSTALL/lib:$SDE_INSTALL/lib64:$DEPEND_INSTALL/lib:$DEPEND_INSTALL/lib64:$LD_LIBRARY_PATH
  
 #### Compile the recipe
 
 ```bash
-cd $IPDK_RECIPE
-./make-all.sh --target=dpdk
+   cd $IPDK_RECIPE
+   ./make-all.sh --target=dpdk
 ```
 
 *Note*: By default, make-all.sh will create the `install` directory under the networking recipe. User can specify a different directory using `--prefix` option to make-all.sh. The following examples assume default `install` directory for the executables. If not, user will need to specify the appropriate path instead of ./install.
 
 ### Run Networking recipe
 
-#### Copy the config files to /usr/share/stratum/dpdk required by infrap4d
+####  Setup the environment required by infrap4d
 
 ```bash
-cd $IPDK_RECIPE
-sudo mkdir -p /etc/stratum/
-sudo mkdir -p /var/log/stratum/
-sudo mkdir -p /usr/share/stratum/dpdk
-sudo cp ./install/share/stratum/dpdk/dpdk_port_config.pb.txt /usr/share/stratum/dpdk/
-sudo cp ./install/share/stratum/dpdk/ dpdk_skip_p4.conf /usr/share/stratum/dpdk/
+   source ./scripts/setup_env.sh $IPDK_RECIPE $SDE_INSTALL $DEPEND_INSTALL
 ```
 
 #### Set hugepages required for DPDK
 
 Run hugepages script, found in `scripts` directory
 ```bash
-sudo ./scripts/set_hugepages.sh
+   sudo ./scripts/set_hugepages.sh
+```
+
+#### Export all environment variables to sudo user
+```bash
+   alias sudo='sudo PATH="$PATH" HOME="$HOME" LD_LIBRARY_PATH="$LD_LIBRARY_PATH" SDE_INSTALL="$SDE_INSTALL"'
 ```
 
 #### Run the infrap4d daemon
 
 ```bash
-cd $IPDK_RECIPE
-sudo ./install/sbin/infrap4d
+   cd $IPDK_RECIPE
+   sudo ./install/sbin/infrap4d
 ```
 
 ### Run a sample program
-
-Open a new terminal for setting the pipeline and trying the sample P4 program. Set all the environment variables and export all environment variables to sudo user
+Open a new terminal for setting the pipeline and trying the sample P4 program. Setup the environment and export all environment variables to sudo user
 ```bash
-   alias sudo='sudo PATH="$PATH" HOME="$HOME" LD_LIBRARY_PATH="$LD_LIBRARY_PATH"'
+   source ./scripts/setup_env.sh $IPDK_RECIPE $SDE_INSTALL $DEPEND_INSTALL
+   alias sudo='sudo PATH="$PATH" HOME="$HOME" LD_LIBRARY_PATH="$LD_LIBRARY_PATH" SDE_INSTALL="$SDE_INSTALL"'
 ```
 
 #### Create 2 TAP ports
